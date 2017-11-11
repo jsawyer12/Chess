@@ -4,11 +4,20 @@ import java.util.Scanner;
 
 public class Main {
 
+    /**
+     * Where board layout is stored
+     */
     public static int[][] gameBoard;
 
+    /**
+     * upper and lower limits on gameBoard
+     */
     public static final int MIN = 0;
     public static final int MAX = 7;
 
+    /**
+     * Way of identifying pieces on gameBoard
+     */
     public static final int EMPTY = 0;
     public static final int BLACKBISH = 1;
     public static final int WHITEBISH = 2;
@@ -25,11 +34,21 @@ public class Main {
 
     public static int curColor;
 
+
+    /**
+     * Checks all moves a player has (or doesn't have) to get out of check,
+     * returns true if no moves left
+     * @return
+     */
     public static boolean checkMate() {
 
         return false;
     }
 
+    /**
+     * Checks to see if game is actually over
+     * @return
+     */
     public static boolean gameOver() {
         if (checkMate()) {
             return true;
@@ -39,7 +58,8 @@ public class Main {
     }
 
     /**
-     * Makes sure the Knight is moving the right way
+     * Makes sure the Knight is moving the right way, creates a list of all possible coordinates it can
+     * move, then confirms if the move is valid
      * @param orig
      * @param dest
      * @return
@@ -71,6 +91,13 @@ public class Main {
         return false;
     }
 
+    /**
+     * Uses direction of movement to return the next coordinate in the diagonal path of the piece
+     * @param orig
+     * @param dest
+     * @param tempCoord
+     * @return
+     */
     public static int[] retNextDiag(int[] orig, int[] dest, int[] tempCoord) {
         if (orig[0] < dest[0]) {
             tempCoord[0]++;
@@ -90,6 +117,12 @@ public class Main {
         return tempCoord;
     }
 
+    /**
+     * Checks to see if input for a piece's movement is valid in the diagonal directions
+     * @param orig
+     * @param dest
+     * @return
+     */
     public static boolean diagonTest(int[] orig, int[] dest) {
         int[] tempCoord = new int[] {orig[0], orig[1]};
         tempCoord = retNextDiag(orig, dest, tempCoord);
@@ -104,6 +137,13 @@ public class Main {
             return false;
     }
 
+    /**
+     * Uses direction of movement to return the next coordinate in the vertical/horizontal path of the piece
+     * @param orig
+     * @param dest
+     * @param tempCoord
+     * @return
+     */
     public static int[] retNextStr8(int[] orig, int[] dest, int[] tempCoord) {
         if (orig[1] == dest[1]) {
             if (orig[0] < dest[0])
@@ -122,6 +162,12 @@ public class Main {
         return tempCoord;
     }
 
+    /**
+     * Checks to see if input for a piece's movement is valid in the straight directions
+     * @param orig
+     * @param dest
+     * @return
+     */
     public static boolean straightTest(int[] orig, int[] dest) {
         if (orig[0] != dest[0] && orig[1] != dest[1])
             return false;
@@ -136,6 +182,13 @@ public class Main {
             return false;
     }
 
+    /**
+     * Checks to make sure both the input for origin and destination coordinates are within the
+     * parameters of the board
+     * @param orig
+     * @param dest
+     * @return
+     */
     public static boolean outOfBoundsInputTest(int[] orig, int[] dest) {
         if (orig[0] < MIN || orig[0] > MAX)
             return false;
@@ -149,6 +202,13 @@ public class Main {
             return true;
     }
 
+    /**
+     * The command center of tests! This method checks for the validity of each user input move before
+     * confirming or denying the move and changing the game state
+     * @param orig
+     * @param dest
+     * @return
+     */
     public static boolean initiateTests(int[] orig, int[] dest) {
         if (!outOfBoundsInputTest(orig, dest))
             return false;
@@ -207,6 +267,9 @@ public class Main {
         }
     }
 
+    /**
+     * Let's the players know who's turn it is
+     */
     public static void printPlayer() {
         System.out.println();
         if (curColor == 1)
@@ -215,6 +278,10 @@ public class Main {
             System.out.println("It is White's turn to play (See Through)");
     }
 
+    /**
+     * Requests the user's input and begins the move sequence
+     * @param reader
+     */
     public static void moveInput(Scanner reader) {
         printPlayer();
         System.out.print("Enter the coordinates of a piece to move and its destination: ");
@@ -223,6 +290,9 @@ public class Main {
         System.out.println(moveIn);
     }
 
+    /**
+     * Prints the current game state of the board
+     */
     public static void displayBoard() {
         System.out.println();
         for (int rows = 0; rows < 8; rows++) {
@@ -279,6 +349,9 @@ public class Main {
         System.out.println();
     }
 
+    /**
+     * Initializes the int[][] array with the starting positions of each piece
+     */
     public static void initializeBoard() {
         gameBoard = new int[][] {{5,3,1,7,9,1,3,5},
                 {11,11,11,11,11,11,11,11},
@@ -290,12 +363,20 @@ public class Main {
                 {6,4,2,8,10,2,4,6}};
     }
 
+    /**
+     * Actually modifies the game state to move the piece according to the user input
+     * @param orig
+     * @param dest
+     */
     public static void movePiece(int[] orig, int[] dest) {
         int piece = gameBoard[orig[1]][orig[0]];
         gameBoard[orig[1]][orig[0]] = EMPTY;
         gameBoard[dest[1]][dest[0]] = piece;
     }
 
+    /**
+     * Changes the game state so the next player can move
+     */
     public static void changeColor() {
         if (curColor == 1)
             curColor = 0;
@@ -303,6 +384,10 @@ public class Main {
             curColor = 1;
     }
 
+    /**
+     * The main method!
+     * @param args
+     */
     public static void main(String[] args) {
         Scanner reader = new Scanner(System.in);
         System.out.println("Welcome to Chess");
