@@ -86,22 +86,54 @@ public class Main {
             else
                 tempCoord[1]++;
         }
+        System.out.println("temp: " +tempCoord[0] +"," +tempCoord[1]);
         return tempCoord;
     }
 
     public static boolean diagonTest(int[] orig, int[] dest) {
         int[] tempCoord = new int[] {orig[0], orig[1]};
         tempCoord = retNextDiag(orig, dest, tempCoord);
-        while (gameBoard[tempCoord[1]][tempCoord[0]] == EMPTY) {
-            if (tempCoord[0] == dest[0] && tempCoord[1] == dest[1]) {
-                return true;
-            }
-            if ((tempCoord[0] == dest[0] && tempCoord[1] != dest[1]) || (tempCoord[0] != dest[0] && tempCoord[1] == dest[1]))
-                return false;
+        //Continue iterating towards destination coord until x = destination x or y = destination y, or
+        //until a piece is found obstructing the path
+        while (tempCoord[0] != dest[0] && tempCoord[1] != dest[1] && gameBoard[tempCoord[1]][tempCoord[0]] == EMPTY) {
             tempCoord = retNextDiag(orig, dest, tempCoord);
-            System.out.println("temp: " +tempCoord[0] +"," +tempCoord[1]);
         }
-        return false;
+        if (tempCoord[0] == dest[0] && tempCoord[1] == dest[1] && (gameBoard[tempCoord[1]][tempCoord[0]] == EMPTY || curColor != (gameBoard[dest[1]][dest[0]] % 2)))
+            return true;
+        else
+            return false;
+    }
+
+    public static int[] retNextStr8(int[] orig, int[] dest, int[] tempCoord) {
+        if (orig[1] == dest[1]) {
+            if (orig[0] < dest[0])
+                tempCoord[0]++;
+            else {
+                tempCoord[0]--;
+            }
+        }
+        else {
+            if (orig[1] < dest[1])
+                tempCoord[1]++;
+            else {
+                tempCoord[1]--;
+            }
+        }
+        return tempCoord;
+    }
+
+    public static boolean straightTest(int[] orig, int[] dest) {
+        if (orig[0] != dest[0] && orig[1] != dest[1])
+            return false;
+        int[] tempCoord = new int[] {orig[0], orig[1]};
+        tempCoord = retNextStr8(orig, dest, tempCoord);
+        while (tempCoord[0] != dest[0] && tempCoord[1] != dest[1] && gameBoard[tempCoord[1]][tempCoord[0]] == EMPTY) {
+            tempCoord = retNextStr8(orig, dest, tempCoord);
+        }
+        if (tempCoord[0] == dest[0] && tempCoord[1] == dest[1] && (gameBoard[tempCoord[1]][tempCoord[0]] == EMPTY || curColor != (gameBoard[dest[1]][dest[0]] % 2)))
+            return true;
+        else
+            return false;
     }
 
     public static boolean outOfBoundsInputTest(int[] orig, int[] dest) {
@@ -136,6 +168,8 @@ public class Main {
                     break;
                 case BLACKROOK:
                 case WHITEROOK:
+                    if (!straightTest(orig, dest))
+                        return false;
                     break;
                 case BLACKQUEEN:
                 case WHITEQUEEN:
