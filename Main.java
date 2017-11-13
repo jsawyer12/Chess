@@ -7,7 +7,7 @@ public class Main {
     /**
      * Where board layout is stored
      */
-    public static int[][] gameBoard;
+    public static Piece[][] board;
 
     /**
      * upper and lower limits on gameBoard
@@ -33,6 +33,7 @@ public class Main {
     public static final int WHITEPAWN = 12;
 
     public static int curColor;
+    public static boolean curTurnWhite;
 
 
     /**
@@ -85,7 +86,7 @@ public class Main {
         potentialMoves[7][1] = orig[1] + 1;
         for (int mo = 0; mo < 8; mo++) {
             if (potentialMoves[mo][0] == dest[0] && potentialMoves[mo][1] == dest[1]
-                    && ((gameBoard[dest[1]][dest[0]] % 2) != curColor || gameBoard[dest[1]][dest[0]] == EMPTY))
+                    && board[dest[1]][dest[0]].getColorID() != curColor)
                 return true;
         }
         return false;
@@ -128,10 +129,10 @@ public class Main {
         tempCoord = retNextDiag(orig, dest, tempCoord);
         //Continue iterating towards destination coord until x = destination x or y = destination y, or
         //until a piece is found obstructing the path
-        while (tempCoord[0] != dest[0] && tempCoord[1] != dest[1] && gameBoard[tempCoord[1]][tempCoord[0]] == EMPTY) {
+        while (tempCoord[0] != dest[0] && tempCoord[1] != dest[1] && board[tempCoord[1]][tempCoord[0]].getColorID() == 2) {
             tempCoord = retNextDiag(orig, dest, tempCoord);
         }
-        if (tempCoord[0] == dest[0] && tempCoord[1] == dest[1] && (gameBoard[tempCoord[1]][tempCoord[0]] == EMPTY || curColor != (gameBoard[dest[1]][dest[0]] % 2)))
+        if (tempCoord[0] == dest[0] && tempCoord[1] == dest[1] && (board[tempCoord[1]][tempCoord[0]].getColorID() == 2 || curColor != board[dest[1]][dest[0]].getColorID()))
             return true;
         else
             return false;
@@ -173,13 +174,85 @@ public class Main {
             return false;
         int[] tempCoord = new int[] {orig[0], orig[1]};
         tempCoord = retNextStr8(orig, dest, tempCoord);
-        while (tempCoord[0] != dest[0] && tempCoord[1] != dest[1] && gameBoard[tempCoord[1]][tempCoord[0]] == EMPTY) {
+        while (tempCoord[0] != dest[0] && tempCoord[1] != dest[1] && board[tempCoord[1]][tempCoord[0]].getColorID() == 2) {
             tempCoord = retNextStr8(orig, dest, tempCoord);
         }
-        if (tempCoord[0] == dest[0] && tempCoord[1] == dest[1] && (gameBoard[tempCoord[1]][tempCoord[0]] == EMPTY || curColor != (gameBoard[dest[1]][dest[0]] % 2)))
+        if (tempCoord[0] == dest[0] && tempCoord[1] == dest[1] && (board[tempCoord[1]][tempCoord[0]].getColorID() == 2 || curColor != board[dest[1]][dest[0]].getColorID()))
             return true;
         else
             return false;
+    }
+
+    /**
+     * Check all possible moves for given pawn and confirms that user input move is valid
+     * @param orig
+     * @param dest
+     * @return
+     */
+    public static boolean pawnTest(int[] orig, int[] dest) { //FIX SO IT CHECKS INTERMEDIATE STEP OR USES MOVED
+
+        if (orig[0] == dest[0] && board[dest[1]][dest[0]].getColorID() == 2) { //If moving straight forward and destination is empty
+            if ((dest[1] == orig[1] + 2 || dest[1] == orig[1] - 2) && !board[orig[1]][orig[0]].isMoved()) { //if moving forward two and hasn't moved yet
+                if (dest[1] == orig[1] + 2 && board[orig[1]][orig[0]].getColorID() == 1) { //if moving down board
+                    if (board[orig[1] + 1][orig[0]].getColorID() == 2) { // if
+                        return true;
+                    }
+                }
+                if (dest[1] == orig[1] - 2) { //if moving up board
+                    if (board[orig[1] - 1][orig[0]].getColorID() == 2) {
+                        return true;
+                    }
+                }
+            }
+            if (dest[1] == orig[1] + 1 && board[orig[1]][orig[0]].getColorID() == 1
+                    || dest[1] == orig[1] - 1 && board[orig[1]][orig[0]].getColorID() == 0)
+                return true;
+        }
+        //if user input is taking a piece diagonally, check to see if valid
+        if (dest[0] == orig[0] - 1 || dest[0] == orig[0] + 1 && board[dest[1]][dest[0]].getColorID() != 2) {
+            if (orig[1] == dest[1] - 1 && board[orig[1]][orig[0]].getColorID() == 1)
+                return true;
+            if (orig[1] == dest[1] + 1 && board[orig[1]][orig[0]].getColorID() == 0)
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Checks to make sure the queen is being input to move properly, aka in the straight directions
+     * or the diagonal directions
+     * @param orig
+     * @param dest
+     * @return
+     */
+    public static boolean queenTest(int[] orig, int[] dest) {
+        if (straightTest(orig, dest))
+            return true;
+        if (diagonTest(orig, dest))
+            return true;
+        return false;
+    }
+
+    /**
+     * Checks to see if King is being input to move properly, aka 1 unit in any direction
+     * @param orig
+     * @param dest
+     * @return
+     */
+    public static boolean kingTest(int[] orig, int[] dest) {
+        ArrayList<int[]> moves = new ArrayList<>();
+        for (int k = orig[0]-1; k <= orig[0]+1; k++) {
+            for (int j = orig[1]-1; j <= orig[1]+1; j++) {
+                if (k != orig[0] || j != orig[1]) {
+                    int[] move = new int[] {k,j};
+                    //System.out.println(Arrays.toString(move));
+                    if (dest[0] == move[0] && dest[1] == move[1])
+                        return true;
+                    moves.add(move);
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -212,10 +285,12 @@ public class Main {
     public static boolean initiateTests(int[] orig, int[] dest) {
         if (!outOfBoundsInputTest(orig, dest))
             return false;
-        if (curColor != (gameBoard[orig[1]][orig[0]] % 2) || gameBoard[orig[1]][orig[0]] == EMPTY)
+        if (curColor != board[orig[1]][orig[0]].getColorID())
+            return false;
+        if (curColor == board[dest[1]][dest[0]].getColorID())
             return false;
         else {
-            switch (gameBoard[orig[1]][orig[0]]) {
+            switch (board[orig[1]][orig[0]].getId()) {
                 case BLACKBISH:
                 case WHITEBISH:
                     if (!diagonTest(orig, dest))
@@ -233,12 +308,18 @@ public class Main {
                     break;
                 case BLACKQUEEN:
                 case WHITEQUEEN:
+                    if (!queenTest(orig, dest))
+                        return false;
                     break;
                 case BLACKKING:
                 case WHITEKING:
+                    if (!kingTest(orig, dest))
+                        return false;
                     break;
                 case BLACKPAWN:
                 case WHITEPAWN:
+                    if (!pawnTest(orig, dest))
+                        return false;
                     break;
             }
             return true;
@@ -273,9 +354,9 @@ public class Main {
     public static void printPlayer() {
         System.out.println();
         if (curColor == 1)
-            System.out.println("It is Black's turn to play (Solid)");
+            System.out.println("It is Black's turn to play");
         else
-            System.out.println("It is White's turn to play (See Through)");
+            System.out.println("It is White's turn to play");
     }
 
     /**
@@ -298,47 +379,7 @@ public class Main {
         for (int rows = 0; rows < 8; rows++) {
             System.out.print(rows +" ");
             for (int cols = 0; cols < 8; cols++) {
-                switch (gameBoard[rows][cols]) {
-                    case EMPTY:
-                        System.out.print("▢ ");
-                        break;
-                    case BLACKBISH:
-                        System.out.print("♝ ");
-                        break;
-                    case WHITEBISH:
-                        System.out.print("♗ ");
-                        break;
-                    case BLACKKNIGHT:
-                        System.out.print("♞ ");
-                        break;
-                    case WHITEKNIGHT:
-                        System.out.print("♘ ");
-                        break;
-                    case BLACKROOK:
-                        System.out.print("♜ ");
-                        break;
-                    case WHITEROOK:
-                        System.out.print("♖ ");
-                        break;
-                    case BLACKQUEEN:
-                        System.out.print("♛ ");
-                        break;
-                    case WHITEQUEEN:
-                        System.out.print("♕ ");
-                        break;
-                    case BLACKKING:
-                        System.out.print("♚ ");
-                        break;
-                    case WHITEKING:
-                        System.out.print("♔ ");
-                        break;
-                    case BLACKPAWN:
-                        System.out.print("♟ ");
-                        break;
-                    case WHITEPAWN:
-                        System.out.print("♙ ");
-                        break;
-                }
+                System.out.print(board[rows][cols].getPrt() +" ");
             }
             System.out.println();
         }
@@ -353,14 +394,53 @@ public class Main {
      * Initializes the int[][] array with the starting positions of each piece
      */
     public static void initializeBoard() {
-        gameBoard = new int[][] {{5,3,1,7,9,1,3,5},
-                {11,11,11,11,11,11,11,11},
-                {0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0},
-                {12,12,12,12,12,12,12,12},
-                {6,4,2,8,10,2,4,6}};
+        board = new Piece[8][8];
+        for (int d = 0; d < 8; d++) {
+            for (int j = 0; j < 8; j++) {
+                Piece emptyP = new Piece (EMPTY, 2);
+                board[d][j] = emptyP;
+            }
+        }
+
+        Piece wRook = new Piece(WHITEROOK,0);
+        board[7][0] = wRook;
+        Piece wRook2 = new Piece(WHITEROOK,0);
+        board[7][7] = wRook2;
+        Piece wKnight = new Piece(WHITEKNIGHT,0);
+        board[7][1] = wKnight;
+        Piece wKnight2 = new Piece(WHITEKNIGHT,0);
+        board[7][6] = wKnight2;
+        Piece wBishop = new Piece(WHITEBISH,0);
+        board[7][2] = wBishop;
+        Piece wBishop2 = new Piece(WHITEBISH,0);
+        board[7][5] = wBishop2;
+        Piece wKing = new Piece(WHITEKING,0);
+        board[7][4] = wKing;
+        Piece wQueen = new Piece(WHITEQUEEN,0);
+        board[7][3] = wQueen;
+
+        Piece bRook = new Piece(BLACKROOK,1);
+        board[0][0] = bRook;
+        Piece bRook2 = new Piece(BLACKROOK,1);
+        board[0][7] = bRook2;
+        Piece bKnight = new Piece(BLACKKNIGHT, 1);
+        board[0][1] = bKnight;
+        Piece bKnight2 = new Piece(BLACKKNIGHT,1);
+        board[0][6] = bKnight2;
+        Piece bBishop = new Piece(BLACKBISH,1);
+        board[0][2] = bBishop;
+        Piece bBishop2 = new Piece(BLACKBISH,1);
+        board[0][5] = bBishop2;
+        Piece bKing = new Piece(BLACKKING,1);
+        board[0][4] = bKing;
+        Piece bQueen = new Piece(BLACKQUEEN,1);
+        board[0][3] = bQueen;
+        for (int k = 0; k <= MAX; k++) {
+            Piece bPawn = new Piece (BLACKPAWN, 1);
+            board[1][k] = bPawn;
+            Piece wPawn = new Piece (WHITEPAWN,0);
+            board[6][k] = wPawn;
+        }
     }
 
     /**
@@ -369,9 +449,12 @@ public class Main {
      * @param dest
      */
     public static void movePiece(int[] orig, int[] dest) {
-        int piece = gameBoard[orig[1]][orig[0]];
-        gameBoard[orig[1]][orig[0]] = EMPTY;
-        gameBoard[dest[1]][dest[0]] = piece;
+        Piece temPiece = board[orig[1]][orig[0]];
+        Piece emptyP = new Piece (EMPTY,  2);
+        board[orig[1]][orig[0]] = emptyP;
+        board[dest[1]][dest[0]] = temPiece;
+        if (!board[dest[1]][dest[0]].isMoved())
+            board[dest[1]][dest[0]].setMoved(true);
     }
 
     /**
@@ -392,6 +475,7 @@ public class Main {
         Scanner reader = new Scanner(System.in);
         System.out.println("Welcome to Chess");
         initializeBoard();
+        curColor = 0;
         while (!gameOver()) {
             displayBoard();
             moveInput(reader);
