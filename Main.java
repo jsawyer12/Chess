@@ -33,7 +33,6 @@ public class Main {
     public static final int WHITEPAWN = 12;
 
     public static int curColor;
-    public static boolean curTurnWhite;
 
 
     /**
@@ -194,7 +193,7 @@ public class Main {
         if (orig[0] == dest[0] && board[dest[1]][dest[0]].getColorID() == 2) { //If moving straight forward and destination is empty
             if ((dest[1] == orig[1] + 2 || dest[1] == orig[1] - 2) && !board[orig[1]][orig[0]].isMoved()) { //if moving forward two and hasn't moved yet
                 if (dest[1] == orig[1] + 2 && board[orig[1]][orig[0]].getColorID() == 1) { //if moving down board
-                    if (board[orig[1] + 1][orig[0]].getColorID() == 2) { // if
+                    if (board[orig[1] + 1][orig[0]].getColorID() == 2) { // if intermediate position is empty
                         return true;
                     }
                 }
@@ -209,7 +208,7 @@ public class Main {
                 return true;
         }
         //if user input is taking a piece diagonally, check to see if valid
-        if (dest[0] == orig[0] - 1 || dest[0] == orig[0] + 1 && board[dest[1]][dest[0]].getColorID() != 2) {
+        if ((dest[0] == orig[0] - 1 || dest[0] == orig[0] + 1) && board[dest[1]][dest[0]].getColorID() != 2) {
             if (orig[1] == dest[1] - 1 && board[orig[1]][orig[0]].getColorID() == 1)
                 return true;
             if (orig[1] == dest[1] + 1 && board[orig[1]][orig[0]].getColorID() == 0)
@@ -252,7 +251,27 @@ public class Main {
                 }
             }
         }
+        if (castleTest(orig, dest))
+            return true;
         return false;
+    }
+
+    public static boolean castleTest(int[] orig, int[] dest) {
+        if (board[orig[1]][orig[0]].isMoved() || board[dest[1]][dest[0]].isMoved())
+            return false;
+        if (orig[0] < dest[0]) {
+            for (int k = orig[0] + 1; k < dest[0]; k++) {
+                if (board[orig[1]][k].getColorID() != 2)
+                    return false;
+            }
+        }
+        if (orig[0] > dest[0]) {
+            for (int k = dest[0] + 1; k < orig[0]; k++) {
+                if (board[orig[1]][k].getColorID() != 2)
+                    return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -287,7 +306,9 @@ public class Main {
             return false;
         if (curColor != board[orig[1]][orig[0]].getColorID())
             return false;
-        if (curColor == board[dest[1]][dest[0]].getColorID())
+        if (curColor == board[dest[1]][dest[0]].getColorID() && (board[dest[1]][dest[0]].getId() != 5 && board[dest[1]][dest[0]].getId() != 6))
+            return false;
+        if (orig[0] == dest[0] && orig[1] == dest[1])
             return false;
         else {
             switch (board[orig[1]][orig[0]].getId()) {
@@ -450,8 +471,11 @@ public class Main {
      */
     public static void movePiece(int[] orig, int[] dest) {
         Piece temPiece = board[orig[1]][orig[0]];
-        Piece emptyP = new Piece (EMPTY,  2);
-        board[orig[1]][orig[0]] = emptyP;
+        Piece rePiece = new Piece(EMPTY,  2);
+        if (castleTest(orig, dest)) {
+            rePiece = board[dest[1]][dest[0]];
+        }
+        board[orig[1]][orig[0]] = rePiece;
         board[dest[1]][dest[0]] = temPiece;
         if (!board[dest[1]][dest[0]].isMoved())
             board[dest[1]][dest[0]].setMoved(true);
